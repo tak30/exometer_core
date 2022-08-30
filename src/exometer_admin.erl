@@ -413,7 +413,7 @@ create_reporter_tabs() ->
 create_ets_tabs() ->
     case ets:info(?EXOMETER_SHARED, name) of
         undefined ->
-            [ets:new(T, [public, named_table, set, {keypos,2}])
+            [ets:new(T, [public, named_table, set, {keypos,2}, {read_concurrency, true}, {write_concurrency, true}, {decentralized_counters, true}])
              || T <- tables()],
             ets:new(?EXOMETER_SHARED, [public, named_table, ordered_set,
                                        {keypos, 2}]),
