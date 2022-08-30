@@ -60,8 +60,7 @@ end_per_suite(_Config) ->
 
 init_per_testcase(_Case, Config) ->
     {ok, Started} = exometer_test_util:ensure_all_started(exometer_core),
-    ct:log("Started: ~p~n", [[{T, catch ets:tab2list(T)}
-                              || T <- exometer_util:tables()]]),
+    ct:log("Started: ~p~n", [{exometer_util:table(), catch ets:tab2list(exometer_util:table())}]),
     [{started_apps, Started}|Config].
 
 end_per_testcase(_Case, Config) ->
@@ -154,8 +153,7 @@ killed_probe_deleted(M) ->
     ct:log("Pid = ~p~n", [Pid]),
     exit(Pid, kill),
     await_death(Pid),
-    ct:log("Ets = ~p~n", [[{T,ets:tab2list(T)} ||
-                              T <- exometer_util:tables()]]),
+    ct:log("Ets = ~p~n", [{exometer_util:table(), ets:tab2list(exometer_util:table())}]),
     {error, not_found} = exometer:get_value(M),
     ct:log("~p deleted~n", [M]),
     true.

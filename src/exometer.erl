@@ -467,20 +467,20 @@ reset_(Name)  when is_list(Name) ->
                     TS = exometer_util:timestamp(),
                     [ets:update_element(T, Name, [{#exometer_entry.value, 0},
                                                   {#exometer_entry.timestamp, TS}])
-                     || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+                     || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
                     ok;
                 #exometer_entry{module = ?MODULE, type = fast_counter,
                                 ref = {M, F}} ->
                     TS = exometer_util:timestamp(),
                     set_call_count(M, F, true),
                     [ets:update_element(T, Name, [{#exometer_entry.timestamp, TS}])
-                     || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+                     || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
                     ok;
                 #exometer_entry{module = ?MODULE, type = gauge} ->
                     TS = exometer_util:timestamp(),
                     [ets:update_element(T, Name, [{#exometer_entry.value, 0},
                                                   {#exometer_entry.timestamp, TS}])
-                     || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+                     || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
                     ok;
                 #exometer_entry{behaviour = probe, type = Type, ref = Ref} ->
                     [exometer_cache:delete(Name, DataPoint) ||
@@ -648,7 +648,7 @@ setopts_gauge(E, Options) ->
 %%     Value.
 
 update_entry_elems(Name, Elems) ->
-    [ets:update_element(T, Name, Elems) || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+    [ets:update_element(T, Name, Elems) || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
     ok.
 
 -type info() :: name | type | module | value | cache
@@ -1097,8 +1097,7 @@ get_ctr_datapoint(#exometer_entry{}, Undefined) ->
     {Undefined, undefined}.
 
 counter_sum(Name) ->
-    lists:sum([ets:lookup_element(T, Name, #exometer_entry.value)
-               || T <- exometer_util:tables()]).
+    ets:lookup_element(exometer_util:table(), Name, #exometer_entry.value).
 
 get_gauge_datapoint(#exometer_entry{value = Value}, value) ->
     {value, Value};
@@ -1130,7 +1129,7 @@ create_entry(#exometer_entry{module = exometer,
                                                     Type == gauge ->
     E1 = E#exometer_entry{value = 0, timestamp = exometer_util:timestamp()},
     insert_aliases(E1),
-    [ets:insert(T, E1) || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+    [ets:insert(T, E1) || T <- [?EXOMETER_ENTRIES,  exometer_util:table()]],
     ok;
 
 create_entry(#exometer_entry{module = exometer,
@@ -1147,7 +1146,7 @@ create_entry(#exometer_entry{module = exometer,
             set_call_count(M, F, ?IS_ENABLED(Status)),
             insert_aliases(E1),
             [ets:insert(T, E1) ||
-                T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+                T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
             ok;
         Other ->
             error({badarg, {function, Other}})
@@ -1178,12 +1177,12 @@ create_entry(#exometer_entry{module = Module,
         {Behaviour, ok }->
             insert_aliases(E),
             [ets:insert(T, E#exometer_entry { behaviour = Behaviour })
-             || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+             || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
             ok;
         {Behaviour, {ok, Ref}} ->
             insert_aliases(E),
             [ets:insert(T, E#exometer_entry{ref=Ref, behaviour=Behaviour})
-             || T <- [?EXOMETER_ENTRIES|exometer_util:tables()]],
+             || T <- [?EXOMETER_ENTRIES, exometer_util:table()]],
             ok;
         Other1 ->
             Other1

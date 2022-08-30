@@ -413,8 +413,7 @@ create_reporter_tabs() ->
 create_ets_tabs() ->
     case ets:info(?EXOMETER_SHARED, name) of
         undefined ->
-            [ets:new(T, [public, named_table, set, {keypos,2}, {read_concurrency, true}, {write_concurrency, true}, {decentralized_counters, true}])
-             || T <- tables()],
+            ets:new(exometer_util:table(), [public, named_table, set, {keypos,2}, {read_concurrency, true}, {write_concurrency, true}, {decentralized_counters, true}]),
             ets:new(?EXOMETER_SHARED, [public, named_table, ordered_set,
                                        {keypos, 2}]),
             ets:new(?EXOMETER_ENTRIES, [public, named_table, ordered_set,
@@ -427,9 +426,6 @@ create_ets_tabs() ->
             true
     end.
 
-tables() ->
-    exometer_util:tables().
-
 
 %% ====
 
@@ -437,8 +433,7 @@ on_error(Name, {restart, {M, F, A}}) ->
     try call_restart(M, F, A) of
 	{ok, Ref} ->
 	    if is_list(Name) ->
-		    [ets:update_element(T, Name, [{#exometer_entry.ref, Ref}])
-		     || T <- exometer_util:tables()];
+		    ets:update_element(exometer_util:table(), Name, [{#exometer_entry.ref, Ref}]);
 	       true -> ok
 	    end,
 	    ok;
@@ -704,7 +699,7 @@ delete_entry_(Name) ->
                 remove_old_instance(Entry, Name)
             after
                 [ets:delete(T, Name) ||
-                    T <- [?EXOMETER_ENTRIES|exometer_util:tables()]]
+                    T <- [?EXOMETER_ENTRIES, exometer_util:table()]]
             end,
             ok;
         [] ->
